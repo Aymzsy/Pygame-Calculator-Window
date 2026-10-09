@@ -1,0 +1,103 @@
+import pygame
+pygame.init()
+
+ScreenWidth = 600
+ScreenHeight = 800
+
+display_font = pygame.font.Font(None, 60)
+current_text = ""
+
+screen = pygame.display.set_mode((ScreenWidth, ScreenHeight))
+pygame.display.set_caption("Calculator App")
+screen.fill((255, 255, 255))  # Fill the screen with white color
+
+#button class 
+class Button:
+    def __init__(self, x, y, width, height, text, font, bg_color=(240, 240, 240), hover_color=(210, 210, 210), text_color=(0, 0, 0)):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.text = text
+        self.font = font
+        self.bg_color = bg_color
+        self.hover_color = hover_color
+        self.text_color = text_color
+
+    def draw(self, surface):
+        mouse_pos = pygame.mouse.get_pos()
+        color = self.hover_color if self.rect.collidepoint(mouse_pos) else self.bg_color
+        pygame.draw.rect(surface, color, self.rect)
+        pygame.draw.rect(surface, (0, 0, 0), self.rect, 2)
+
+        text_surf = self.font.render(self.text, True, self.text_color)
+        text_rect = text_surf.get_rect(center=self.rect.center)
+        surface.blit(text_surf, text_rect)
+
+    def is_clicked(self, event):
+        return event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.rect.collidepoint(event.pos)
+
+# Create buttons for the calculator
+font = pygame.font.Font(None, 40)
+layout = [
+    (0, 160, "7"), (120, 160, "8"), (240, 160, "9"), (360, 160, "DEL"), (480, 160, "AC"),
+    (0, 320, "4"), (120, 320, "5"), (240, 320, "6"), (360, 320, "*"),   (480, 320, "/"),
+    (0, 480, "1"), (120, 480, "2"), (240, 480, "3"), (360, 480, "-"),   (480, 480, "Format"),
+    (0, 640, "0"), (120, 640, "."), (240, 640, "="), (360, 640, "+"),   (480, 640, "%")
+]
+
+#storing the buttons in a dictionary
+buttons = {
+    label: Button(x, y, 120, 160, label, font)
+    for (x, y, label) in layout
+}
+
+# lines for the calculator layout
+pygame.draw.line(screen, (0, 0, 0), (0, 160), (600, 160), 5)  # Horizontal line for buttons
+pygame.draw.line(screen, (0, 0, 0), (0, 320), (600, 320), 5)  
+pygame.draw.line(screen, (0, 0, 0), (0, 480), (600, 480), 5)
+pygame.draw.line(screen, (0, 0, 0), (0, 640), (600, 640), 5)
+
+#vertical lines for the layout
+pygame.draw.line(screen, (0, 0, 0), (120, 160), (120, 800), 5)
+pygame.draw.line(screen, (0, 0, 0), (240, 160), (240, 800), 5)
+pygame.draw.line(screen, (0, 0, 0), (360, 160), (360, 800), 5)
+pygame.draw.line(screen, (0, 0, 0), (480, 160), (480, 800), 5)
+
+# if the button is pressed - output the number or operator to the screen
+
+
+running = True
+while running:
+    screen.fill((255, 255, 255))
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            for label, btn in buttons.items():
+                if btn.is_clicked(event):
+                    if label == "AC":
+                        current_text = ""
+                    elif label == "DEL":
+                        current_text = current_text[:-1]
+                    elif label == "=":
+                        try:
+                            current_text = str(eval(current_text))
+                        except Exception:
+                            current_text = "Error"
+                    elif label not in ("Format", "%"):
+                        if current_text == "Error":
+                            current_text = ""
+                        current_text += label
+
+    display_surf = display_font.render(current_text, True, (0, 0, 0))
+    display_rect = display_surf.get_rect(midright=(ScreenWidth - 20, 80))
+    screen.blit(display_surf, display_rect)
+
+    for btn in buttons.values():
+        btn.draw(screen)
+
+    for y in range(160, 800, 160):
+        pygame.draw.line(screen, (0, 0, 0), (0, y), (600, y), 5)
+    for x in range(120, 600, 120):
+        pygame.draw.line(screen, (0, 0, 0), (x, 160), (x, 800), 5)
+
+    pygame.display.flip()
